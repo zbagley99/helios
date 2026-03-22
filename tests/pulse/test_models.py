@@ -16,6 +16,9 @@ class TestTrendItem:
         assert item.url is None
         assert item.score is None
         assert isinstance(item.timestamp, datetime)
+        assert isinstance(item.scraped_at, datetime)
+        assert not item.batch_id
+        assert item.status == "new"
 
     def test_full(self):
         item = TrendItem(
@@ -35,3 +38,6 @@ class TestTrendItem:
         data = item.model_dump(mode="json")
         assert "title" in data
         assert "timestamp" in data
+        assert "scraped_at" in data
+        assert "batch_id" in data
+        assert "status" in data

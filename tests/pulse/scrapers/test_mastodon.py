@@ -51,3 +51,16 @@ class TestMastodonScraper:
         coll = get_collection("mastodon")
         count = await coll.count_documents({})
         assert count == 2
+
+    @respx.mock
+    async def test_scrape_sets_batch_fields(self, mock_db):
+        respx.get(MASTODON_TRENDS_URL).mock(return_value=Response(200, json=MOCK_MASTODON_RESPONSE))
+
+        await scrape_mastodon()
+        from shared.db import get_collection
+
+        coll = get_collection("mastodon")
+        doc = await coll.find_one({})
+        assert doc["status"] == "new"
+        assert doc["batch_id"]
+        assert "scraped_at" in doc

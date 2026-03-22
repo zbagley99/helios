@@ -16,6 +16,9 @@ class TestCommodityItem:
         assert item.price is None
         assert item.currency == "USD"
         assert isinstance(item.timestamp, datetime)
+        assert isinstance(item.scraped_at, datetime)
+        assert not item.batch_id
+        assert item.status == "new"
 
     def test_full(self):
         item = CommodityItem(
@@ -36,3 +39,6 @@ class TestCommodityItem:
         data = item.model_dump(mode="json")
         assert "ticker" in data
         assert "timestamp" in data
+        assert "scraped_at" in data
+        assert "batch_id" in data
+        assert "status" in data

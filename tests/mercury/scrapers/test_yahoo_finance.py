@@ -61,6 +61,24 @@ class TestScrapeYahooFinance:
         assert count == len(items)
 
     @patch("mercury.scrapers.yahoo_finance._fetch_ticker_data")
+    async def test_scrape_sets_batch_fields(self, mock_fetch, mock_db):
+        mock_fetch.return_value = {
+            "price": 2000.0,
+            "change": 10.0,
+            "pct_change": 0.5,
+            "currency": "USD",
+        }
+
+        await scrape_yahoo_finance()
+        from shared.db import get_collection
+
+        coll = get_collection("commodities")
+        doc = await coll.find_one({})
+        assert doc["status"] == "new"
+        assert doc["batch_id"]
+        assert "scraped_at" in doc
+
+    @patch("mercury.scrapers.yahoo_finance._fetch_ticker_data")
     async def test_scrape_skips_failures(self, mock_fetch, mock_db):
         mock_fetch.return_value = None
         items = await scrape_yahoo_finance()

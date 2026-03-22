@@ -50,3 +50,16 @@ class TestWikipediaScraper:
         coll = get_collection("wikipedia")
         count = await coll.count_documents({})
         assert count == 2
+
+    @respx.mock
+    async def test_scrape_sets_batch_fields(self, mock_db):
+        respx.get(url__regex=r"wikimedia\.org.*").mock(return_value=Response(200, json=MOCK_WIKI_RESPONSE))
+
+        await scrape_wikipedia()
+        from shared.db import get_collection
+
+        coll = get_collection("wikipedia")
+        doc = await coll.find_one({})
+        assert doc["status"] == "new"
+        assert doc["batch_id"]
+        assert "scraped_at" in doc
