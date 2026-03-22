@@ -8,7 +8,7 @@ import httpx
 from bs4 import BeautifulSoup
 
 from pulse.models import TrendItem
-from shared.db import get_collection
+from shared.scrape import persist_batch
 
 logger = logging.getLogger(__name__)
 
@@ -78,9 +78,6 @@ async def scrape_google_trends() -> list[TrendItem]:
         logger.warning("no trends extracted from page — parser may need updating")
 
     if items:
-        staging = get_collection("google_staging")
-        await staging.delete_many({})
-        await staging.insert_many([item.model_dump(mode="json") for item in items])
-        await staging.rename("google", dropTarget=True)
+        await persist_batch("google", [item.model_dump(mode="json") for item in items], "title")
     logger.info("scrape finished — %d items", len(items))
     return items

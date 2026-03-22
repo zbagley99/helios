@@ -8,7 +8,7 @@ from xml.etree import ElementTree as ET  # noqa: S405
 import httpx
 
 from pulse.models import TrendItem
-from shared.db import get_collection
+from shared.scrape import persist_batch
 
 logger = logging.getLogger(__name__)
 
@@ -63,9 +63,6 @@ async def scrape_news_rss() -> list[TrendItem]:
             all_items.extend(feed_items)
 
     if all_items:
-        staging = get_collection("news_staging")
-        await staging.delete_many({})
-        await staging.insert_many([item.model_dump(mode="json") for item in all_items])
-        await staging.rename("news", dropTarget=True)
+        await persist_batch("news", [item.model_dump(mode="json") for item in all_items], "url")
     logger.info("scrape finished — %d items", len(all_items))
     return all_items

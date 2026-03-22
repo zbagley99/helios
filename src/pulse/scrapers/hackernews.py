@@ -6,7 +6,7 @@ import logging
 import httpx
 
 from pulse.models import TrendItem
-from shared.db import get_collection
+from shared.scrape import persist_batch
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +50,6 @@ async def scrape_hackernews() -> list[TrendItem]:
         items = [r for r in results if r is not None]
 
     if items:
-        staging = get_collection("hackernews_staging")
-        await staging.delete_many({})
-        await staging.insert_many([item.model_dump(mode="json") for item in items])
-        await staging.rename("hackernews", dropTarget=True)
+        await persist_batch("hackernews", [item.model_dump(mode="json") for item in items], "url")
     logger.info("scrape finished — %d items", len(items))
     return items

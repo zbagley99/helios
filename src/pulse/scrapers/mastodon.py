@@ -6,7 +6,7 @@ import re
 import httpx
 
 from pulse.models import TrendItem
-from shared.db import get_collection
+from shared.scrape import persist_batch
 
 logger = logging.getLogger(__name__)
 
@@ -39,9 +39,6 @@ async def scrape_mastodon() -> list[TrendItem]:
             )
 
     if items:
-        staging = get_collection("mastodon_staging")
-        await staging.delete_many({})
-        await staging.insert_many([item.model_dump(mode="json") for item in items])
-        await staging.rename("mastodon", dropTarget=True)
+        await persist_batch("mastodon", [item.model_dump(mode="json") for item in items], "url")
     logger.info("scrape finished — %d items", len(items))
     return items

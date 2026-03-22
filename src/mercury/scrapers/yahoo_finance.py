@@ -6,7 +6,7 @@ import yfinance as yf
 
 from mercury.models import CommodityItem
 from mercury.tickers import TICKERS
-from shared.db import get_collection
+from shared.scrape import persist_batch
 
 
 def _fetch_ticker_data(symbol: str) -> dict | None:
@@ -52,8 +52,6 @@ async def scrape_yahoo_finance() -> list[CommodityItem]:
             )
         )
 
-    coll = get_collection("commodities")
     if items:
-        await coll.delete_many({})
-        await coll.insert_many([item.model_dump(mode="json") for item in items])
+        await persist_batch("commodities", [item.model_dump(mode="json") for item in items], "ticker")
     return items

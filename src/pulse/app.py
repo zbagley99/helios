@@ -12,15 +12,20 @@ from pulse.scrapers import SCRAPER_REGISTRY
 from shared.db import close_db, init_db
 from shared.exceptions import register_exception_handlers
 from shared.health import create_health_router
+from shared.indexes import ensure_indexes
 from shared.scheduler import create_scheduler, register_job
 
 settings = PulseSettings()
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI) -> AsyncIterator[None]:  # noqa: RUF029
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Manage database and scheduler lifecycle."""
     init_db(settings.mongo_uri, settings.db_name)
+    ttl_seconds = settings.ttl_hours * 3600
+    for name in SCRAPER_REGISTRY:
+        nk = "title" if name == "google" else "url"
+        await ensure_indexes(name, ttl_seconds, [nk])
     scheduler = create_scheduler()
     for name, entry in SCRAPER_REGISTRY.items():
         register_job(scheduler, entry["func"], entry["interval_minutes"], f"pulse_{name}")
