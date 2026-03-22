@@ -1,0 +1,67 @@
+[project]
+name = "helios"
+version = "0.1.0"
+description = "Microservices monorepo — scrape, cache, and serve data for Retina"
+requires-python = ">=3.14"
+
+[tool.poetry]
+package-mode = false
+packages = [
+    { include = "shared", from = "src" },
+    { include = "pulse", from = "src" },
+    { include = "mercury", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.14"
+fastapi = ">=0.115"
+uvicorn = { version = ">=0.34", extras = ["standard"] }
+motor = ">=3.7"
+pydantic = ">=2.10"
+pydantic-settings = ">=2.8"
+httpx = ">=0.28"
+beautifulsoup4 = ">=4.13"
+apscheduler = ">=3.11"
+yfinance = ">=0.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.3"
+pytest-asyncio = ">=0.25"
+respx = ">=0.22"
+mongomock-motor = ">=0.0.34"
+ruff = ">=0.14"
+
+[build-system]
+requires = ["poetry-core>=2.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 120
+preview = true
+target-version = "py314"
+
+[tool.ruff.lint]
+select = [
+    "A", "B", "C4", "C90", "COM", "D", "DTZ", "E", "ERA", "EXE",
+    "F", "FBT", "FLY", "FURB", "G", "I", "ICN", "ISC", "LOG", "N",
+    "PERF", "PIE", "PL", "PT", "PTH", "Q", "RET", "RSE", "RUF",
+    "S", "SIM", "SLF", "SLOT", "T100", "TRY", "UP", "W", "YTT",
+]
+ignore = [
+    "A005", "COM812", "D100", "D104", "D106", "D203", "D212",
+    "D401", "D404", "D405", "ISC001", "ISC003", "PLR09",
+    "PLR2004", "PLR6301", "TRY003",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["D102", "PLC0415", "PLC2701", "S101", "S105", "SLF001"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

@@ -1,0 +1,20 @@
+services:
+  pulse:
+    build:
+      context: .
+      dockerfile: docker/pulse.Dockerfile
+    ports:
+      - "5603:5603"
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
+    restart: unless-stopped
+
+  mercury:
+    build:
+      context: .
+      dockerfile: docker/mercury.Dockerfile
+    ports:
+      - "5602:5602"
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
+    restart: unless-stopped
