@@ -1,6 +1,6 @@
 """Mercury data models."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from pydantic import BaseModel, Field
 
@@ -16,3 +16,6 @@ class CommodityItem(BaseModel):
     pct_change: float | None = None
     currency: str = "USD"
     timestamp: datetime = Field(default_factory=datetime.now)
+    scraped_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    batch_id: str = ""
+    status: str = "new"

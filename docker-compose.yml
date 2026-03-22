@@ -7,6 +7,7 @@ services:
       - "5603:5603"
     environment:
       - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
+      - TTL_HOURS=${TTL_HOURS:-48}
     restart: unless-stopped
 
   mercury:
@@ -17,4 +18,5 @@ services:
       - "5602:5602"
     environment:
       - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
+      - TTL_HOURS=${TTL_HOURS:-48}
     restart: unless-stopped

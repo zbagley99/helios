@@ -10,5 +10,6 @@ class BaseServiceSettings(BaseSettings):
     db_name: str = "helios"
     port: int = 8000
     debug: bool = False
+    ttl_hours: int = 48
 
     model_config = {"env_prefix": "", "extra": "ignore"}

@@ -15,3 +15,6 @@ class TrendItem(BaseModel):
     score: float | None = None
     description: str | None = None
     timestamp: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    scraped_at: datetime = Field(default_factory=lambda: datetime.now(tz=UTC))
+    batch_id: str = ""
+    status: str = "new"
