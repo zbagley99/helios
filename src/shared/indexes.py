@@ -32,4 +32,9 @@ async def ensure_indexes(collection_name: str, ttl_seconds: int, natural_key_fie
 
     # Index on natural key fields for change detection lookups
     if natural_key_fields:
-        await coll.create_index([(f, 1) for f in natural_key_fields], name="natural_key")
+        try:
+            await coll.create_index([(f, 1) for f in natural_key_fields], name="natural_key")
+        except OperationFailure:
+            await coll.drop_index("natural_key")
+            await coll.create_index([(f, 1) for f in natural_key_fields], name="natural_key")
+            logger.info("recreated natural_key index on %s", collection_name)

@@ -1,5 +1,6 @@
 """Pulse FastAPI application."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -15,6 +16,8 @@ from shared.health import create_health_router
 from shared.indexes import ensure_indexes
 from shared.scheduler import create_scheduler, register_job
 
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
+
 settings = PulseSettings()
 
 
@@ -24,8 +27,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     init_db(settings.mongo_uri, settings.db_name)
     ttl_seconds = settings.ttl_hours * 3600
     for name in SCRAPER_REGISTRY:
-        nk = "title" if name == "google" else "url"
-        await ensure_indexes(name, ttl_seconds, [nk])
+        await ensure_indexes(name, ttl_seconds, ["url"])
     scheduler = create_scheduler()
     for name, entry in SCRAPER_REGISTRY.items():
         register_job(scheduler, entry["func"], entry["interval_minutes"], f"pulse_{name}")

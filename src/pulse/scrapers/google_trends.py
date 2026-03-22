@@ -1,83 +1,66 @@
-"""Google Trends scraper via trending page."""
+"""Google Trends scraper via RSS feed."""
 
-import json
 import logging
 import re
+from xml.etree import ElementTree as ET  # noqa: S405
 
 import httpx
-from bs4 import BeautifulSoup
 
 from pulse.models import TrendItem
 from shared.scrape import persist_batch
 
 logger = logging.getLogger(__name__)
 
-GOOGLE_TRENDS_URL = "https://trends.google.com/trending?geo=US"
-MAX_ITEMS = 20
+GOOGLE_TRENDS_URL = "https://trends.google.com/trending/rss?geo=US"
+
+HT_NS = {"ht": "https://trends.google.com/trending/rss"}
 
 
-def parse_trends_page(html: str) -> list[TrendItem]:
-    """Extract trending topics from the Google Trends page HTML."""
+def parse_trends_rss(xml_text: str) -> list[TrendItem]:
+    """Parse Google Trends RSS XML into TrendItem list."""
     items: list[TrendItem] = []
-
-    # Try to find embedded JSON data first
-    soup = BeautifulSoup(html, "html.parser")
-    scripts = soup.find_all("script")
-    for script in scripts:
-        if script.string and "trendingSearches" in script.string:
-            matches = re.findall(r'\{[^{}]*"title"[^{}]*\}', script.string)
-            for match in matches[:MAX_ITEMS]:
-                try:
-                    data = json.loads(match)
-                    items.append(
-                        TrendItem(
-                            title=data.get("title", {}).get("query", data.get("query", "")),
-                            url=f"https://trends.google.com{data.get('url', '')}",
-                            source="google",
-                            category="trending",
-                            score=None,
-                        )
-                    )
-                except (json.JSONDecodeError, AttributeError):
-                    logger.warning("failed to parse trend JSON match: %s", match[:80])
-                    continue
-
-    # Fallback: parse visible trending items from HTML
-    if not items:
-        for el in soup.select("[class*='trending'], [class*='trend-item'], .mZ3RIc"):
-            text = el.get_text(strip=True)
-            if text and len(text) > 1:
-                items.append(
-                    TrendItem(
-                        title=text[:100],
-                        source="google",
-                        category="trending",
-                    )
-                )
-                if len(items) >= MAX_ITEMS:
-                    break
-
+    root = ET.fromstring(xml_text)  # noqa: S314
+    for item in root.findall(".//item"):
+        title_el = item.find("title")
+        link_el = item.find("link")
+        if title_el is None or not title_el.text:
+            continue
+        traffic_el = item.find("ht:approx_traffic", HT_NS)
+        score = _parse_traffic(traffic_el.text) if traffic_el is not None and traffic_el.text else None
+        items.append(
+            TrendItem(
+                title=title_el.text.strip(),
+                url=link_el.text.strip() if link_el is not None and link_el.text else None,
+                source="google",
+                category="trending",
+                score=score,
+            )
+        )
     return items
 
 
+def _parse_traffic(traffic: str) -> float | None:
+    """Parse traffic string like '500,000+' into a numeric value."""
+    digits = re.sub(r"[^\d]", "", traffic)
+    return float(digits) if digits else None
+
+
 async def scrape_google_trends() -> list[TrendItem]:
-    """Fetch trending topics from Google Trends."""
+    """Fetch trending topics from Google Trends RSS feed."""
     logger.info("scrape started")
     items: list[TrendItem] = []
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0",
-        "Accept-Language": "en-US,en;q=0.9",
-    }
     transport = httpx.AsyncHTTPTransport(retries=2)
-    async with httpx.AsyncClient(timeout=15, headers=headers, follow_redirects=True, transport=transport) as client:
+    async with httpx.AsyncClient(
+        timeout=15, follow_redirects=True, headers={"User-Agent": "Helios/0.1"}, transport=transport
+    ) as client:
         resp = await client.get(GOOGLE_TRENDS_URL)
         resp.raise_for_status()
-        items = parse_trends_page(resp.text)
+        items = parse_trends_rss(resp.text)
 
     if not items:
-        logger.warning("no trends extracted from page — parser may need updating")
+        logger.warning("no trends extracted from RSS feed")
 
     if items:
-        await persist_batch("google", [item.model_dump(mode="json") for item in items], "title")
+        await persist_batch("google", [item.model_dump(mode="json") for item in items], "url")
     logger.info("scrape finished — %d items", len(items))
     return items

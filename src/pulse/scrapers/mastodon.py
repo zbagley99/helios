@@ -26,7 +26,7 @@ async def scrape_mastodon() -> list[TrendItem]:
 
         for status in statuses:
             content = status.get("content", "")
-            clean = re.sub(r"<[^>]+>", "", content)[:200]
+            clean = re.sub(r"<[^>]+>", "", content)[:1000]
             items.append(
                 TrendItem(
                     title=clean[:100] or "Untitled",

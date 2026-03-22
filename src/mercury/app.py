@@ -1,5 +1,6 @@
 """Mercury FastAPI application."""
 
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -14,6 +15,8 @@ from shared.exceptions import register_exception_handlers
 from shared.health import create_health_router
 from shared.indexes import ensure_indexes
 from shared.scheduler import create_scheduler, register_job
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
 settings = MercurySettings()
 

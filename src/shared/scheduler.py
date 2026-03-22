@@ -1,6 +1,7 @@
 """APScheduler helpers for periodic scraping jobs."""
 
 from collections.abc import Callable
+from datetime import UTC, datetime
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
@@ -12,4 +13,11 @@ def create_scheduler() -> AsyncIOScheduler:
 
 def register_job(scheduler: AsyncIOScheduler, func: Callable, interval_minutes: int, job_id: str) -> None:
     """Register an interval job on the scheduler."""
-    scheduler.add_job(func, "interval", minutes=interval_minutes, id=job_id, replace_existing=True)
+    scheduler.add_job(
+        func,
+        "interval",
+        minutes=interval_minutes,
+        id=job_id,
+        replace_existing=True,
+        next_run_time=datetime.now(tz=UTC),
+    )

@@ -47,7 +47,7 @@ async def scrape_news_rss() -> list[TrendItem]:
     logger.info("scrape started")
     all_items: list[TrendItem] = []
     transport = httpx.AsyncHTTPTransport(retries=2)
-    async with httpx.AsyncClient(timeout=15, transport=transport) as client:
+    async with httpx.AsyncClient(timeout=15, headers={"User-Agent": "Helios/0.1"}, transport=transport) as client:
 
         async def fetch_feed(feed_name: str, url: str) -> list[TrendItem]:
             try:
