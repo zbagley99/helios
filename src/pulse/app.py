@@ -15,6 +15,7 @@ from shared.exceptions import register_exception_handlers
 from shared.health import create_health_router
 from shared.indexes import ensure_indexes
 from shared.scheduler import create_scheduler, register_job
+from shared.scrape import get_next_run_time
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:%(name)s:%(message)s")
 
@@ -30,7 +31,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         await ensure_indexes(name, ttl_seconds, ["url"])
     scheduler = create_scheduler()
     for name, entry in SCRAPER_REGISTRY.items():
-        register_job(scheduler, entry["func"], entry["interval_minutes"], f"pulse_{name}")
+        nrt = await get_next_run_time(name, entry["interval_minutes"])
+        register_job(scheduler, entry["func"], entry["interval_minutes"], f"pulse_{name}", next_run_time=nrt)
     scheduler.start()
     try:
         yield

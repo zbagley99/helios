@@ -1,8 +1,36 @@
 """Batch persistence with change detection."""
 
-from datetime import UTC, datetime
+import logging
+from datetime import UTC, datetime, timedelta
 
 from shared.db import get_collection
+
+logger = logging.getLogger(__name__)
+
+
+async def get_next_run_time(collection_name: str, interval_minutes: int) -> datetime:
+    """Return when a scraper should next fire based on data freshness."""
+    now = datetime.now(tz=UTC)
+    coll = get_collection(collection_name)
+
+    doc = await coll.find_one(
+        {"status": {"$ne": "dropped"}},
+        {"scraped_at": 1},
+        sort=[("scraped_at", -1)],
+    )
+
+    if not doc or "scraped_at" not in doc:
+        logger.info("%s: no existing data — firing immediately", collection_name)
+        return now
+
+    age = now - doc["scraped_at"]
+    if age >= timedelta(minutes=interval_minutes):
+        logger.info("%s: data is stale (%s old) — firing immediately", collection_name, age)
+        return now
+
+    next_time = doc["scraped_at"] + timedelta(minutes=interval_minutes)
+    logger.info("%s: data is fresh — deferring until %s", collection_name, next_time)
+    return next_time
 
 
 async def persist_batch(collection_name: str, items: list[dict], natural_key: str) -> list[dict]:
