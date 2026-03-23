@@ -9,7 +9,7 @@ _db: AsyncIOMotorDatabase | None = None
 def init_db(mongo_uri: str, db_name: str) -> None:
     """Initialize the Motor client and select the database."""
     global _client, _db  # noqa: PLW0603
-    _client = AsyncIOMotorClient(mongo_uri)
+    _client = AsyncIOMotorClient(mongo_uri, tz_aware=True)
     _db = _client[db_name]
 
 
