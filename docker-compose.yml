@@ -20,3 +20,16 @@ services:
       - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
       - TTL_HOURS=${TTL_HOURS:-48}
     restart: unless-stopped
+
+  zephyr:
+    build:
+      context: .
+      dockerfile: docker/zephyr.Dockerfile
+    ports:
+      - "5555:5555"
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb://localhost:27017/}
+      - TTL_HOURS=${TTL_HOURS:-48}
+      - LOCATION_NAME=${LOCATION_NAME:-Washington}
+      - TIDE_STATION_ID=${TIDE_STATION_ID:-8594900}
+    restart: unless-stopped

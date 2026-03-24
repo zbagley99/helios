@@ -10,6 +10,7 @@ packages = [
     { include = "shared", from = "src" },
     { include = "pulse", from = "src" },
     { include = "mercury", from = "src" },
+    { include = "zephyr", from = "src" },
 ]
 
 [tool.poetry.dependencies]
