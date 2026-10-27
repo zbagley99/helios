@@ -19,14 +19,14 @@ fastapi = ">=0.115"
 uvicorn = { version = ">=0.34", extras = ["standard"] }
 motor = ">=3.7"
 pydantic = ">=2.10"
-pydantic-settings = ">=2.8"
+pydantic-settings = ">=2.14.2"
 httpx = ">=0.28"
 beautifulsoup4 = ">=4.13"
 apscheduler = ">=3.11"
 yfinance = ">=0.2"
 
 [tool.poetry.group.dev.dependencies]
-pytest = ">=8.3"
+pytest = ">=9.0.3"
 pytest-asyncio = ">=0.25"
 respx = ">=0.22"
 mongomock-motor = ">=0.0.34"
